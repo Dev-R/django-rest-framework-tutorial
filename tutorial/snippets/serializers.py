@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
-
+from django.contrib.auth.models import User
 '''
 A serializer class is very similar to a Django Form class, 
 and includes similar validation flags on the various fields, 
@@ -42,9 +42,10 @@ class SnippetSerializer(serializers.ModelSerializer):
     as SnippetSerializer(serializers.Serializer) class is replicating a lot of information 
     that's also contained in the Snippet model
     '''
+    owner = serializers.ReadOnlyField(source='owner.username')
     class Meta:
         model = Snippet
-        fields = ['id', 'title', 'code', 'linenos', 'language', 'style']
+        fields = ['id', 'title', 'code', 'linenos', 'language', 'owner','style']
     '''
     It's important to remember that ModelSerializer classes don't do 
     anything particularly magical, 
@@ -52,3 +53,10 @@ class SnippetSerializer(serializers.ModelSerializer):
     An automatically determined set of fields.
     Simple default implementations for the create() and update() methods.
     '''
+
+class UserSerializer(serializers.ModelSerializer):
+    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'snippets']
