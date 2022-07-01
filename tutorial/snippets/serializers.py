@@ -36,7 +36,7 @@ such as required, max_length and default.
 #         instance.save()
 #         return instance
 
-class SnippetSerializer(serializers.ModelSerializer):
+class SnippetSerializer_Model(serializers.ModelSerializer):
     '''
     Notice using 'ModelSerializer' is less explicit and better than 'Serializer
     as SnippetSerializer(serializers.Serializer) class is replicating a lot of information 
@@ -54,9 +54,46 @@ class SnippetSerializer(serializers.ModelSerializer):
     Simple default implementations for the create() and update() methods.
     '''
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer_Model(serializers.ModelSerializer):
     snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
 
     class Meta:
         model = User
         fields = ['id', 'username', 'snippets']
+
+
+
+'''
+                    The HyperlinkedModelSerializer class is similar to the ModelSerializer 
+                    class except that it uses hyperlinks to represent relationships, rather than primary keys.
+                    https://stackoverflow.com/questions/33421147/what-is-the-benefit-of-using-a-hyperlinkedmodelserializer-in-drf
+'''
+
+class SnippetSerializer(serializers.HyperlinkedModelSerializer):
+    '''
+    The HyperlinkedModelSerializer has the following differences from ModelSerializer:
+        It does not include the id field by default.
+        It includes a url field, using HyperlinkedIdentityField.
+        Relationships use HyperlinkedRelatedField, instead of PrimaryKeyRelatedField.
+    '''
+    owner = serializers.ReadOnlyField(source='owner.username')
+    highlight = serializers.HyperlinkedIdentityField(view_name='snippet-highlight', format='html')
+
+    class Meta:
+        model = Snippet
+        fields = ['url', 'id', 'highlight', 'owner',
+                  'title', 'code', 'linenos', 'language', 'style']
+
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    '''
+    The HyperlinkedModelSerializer has the following differences from ModelSerializer:
+        It does not include the id field by default.
+        It includes a url field, using HyperlinkedIdentityField.
+        Relationships use HyperlinkedRelatedField, instead of PrimaryKeyRelatedField.
+    '''
+    snippets = serializers.HyperlinkedRelatedField(many=True, view_name='snippet-detail', read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['url', 'id', 'username', 'snippets']
